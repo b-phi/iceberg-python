@@ -923,6 +923,7 @@ class Table:
         selected_fields: Tuple[str, ...] = ("*",),
         case_sensitive: bool = True,
         snapshot_id: Optional[int] = None,
+        ref_name: Optional[str] = None,
         options: Properties = EMPTY_DICT,
         limit: Optional[int] = None,
     ) -> DataScan:
@@ -940,10 +941,13 @@ class Table:
                 A tuple of strings representing the column names
                 to return in the output dataframe.
             case_sensitive:
-                If True column matching is case sensitive
+                If True column matching is case-sensitive.
             snapshot_id:
                 Optional Snapshot ID to time travel to. If None,
                 scans the table as of the current snapshot ID.
+            ref_name:
+                Optional name of a branch or tag to read from.
+                If None, defaults to the main branch.
             options:
                 Additional Table properties as a dictionary of
                 string key value pairs to use for this scan.
@@ -955,7 +959,7 @@ class Table:
         Returns:
             A DataScan based on the table's current metadata.
         """
-        return DataScan(
+        scan = DataScan(
             table_metadata=self.metadata,
             io=self.io,
             row_filter=row_filter,
@@ -965,6 +969,10 @@ class Table:
             options=options,
             limit=limit,
         )
+        if ref_name is not None:
+            scan = scan.use_ref(ref_name)
+
+        return scan
 
     @property
     def format_version(self) -> TableVersion:
@@ -1397,6 +1405,7 @@ class StagedTable(Table):
         selected_fields: Tuple[str, ...] = ("*",),
         case_sensitive: bool = True,
         snapshot_id: Optional[int] = None,
+        ref_name: Optional[str] = None,
         options: Properties = EMPTY_DICT,
         limit: Optional[int] = None,
     ) -> DataScan:
